@@ -2,22 +2,29 @@
 import os
 import sys
 import ftplib
-from datetime import datetime
 
 ftp_host = os.getenv('FTP_HOST')
 ftp_user = os.getenv('FTP_USER')
 ftp_password = os.getenv('FTP_PASSWORD')
+remote_path = '/home/juicyhot/scripts'
 
-timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-filename = f'crawler_output_{timestamp}.txt'
+files_to_upload = [
+    ('crawler.py', f'{remote_path}/crawler.py'),
+    ('requirements.txt', f'{remote_path}/requirements.txt'),
+    ('scripts/run_crawler.sh', f'{remote_path}/run_crawler.sh'),
+]
 
 try:
     ftp = ftplib.FTP(ftp_host)
     ftp.login(ftp_user, ftp_password)
-    with open('crawler_output.txt', 'rb') as f:
-        ftp.storbinary(f'STOR {filename}', f)
-    print(f'[FTP] Upload Success: {filename}')
+
+    for local_file, remote_file in files_to_upload:
+        with open(local_file, 'rb') as f:
+            ftp.storbinary(f'STOR {remote_file}', f)
+        print(f'[FTP] Uploaded: {remote_file}')
+
     ftp.quit()
+    print('[FTP] All files deployed successfully')
 except Exception as e:
     print(f'[FTP] Error: {type(e).__name__}: {str(e)}')
     sys.exit(1)
