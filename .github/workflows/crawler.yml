@@ -27,12 +27,10 @@ jobs:
           echo "Crawler executed successfully"
           cat crawler_output.txt
 
-      - name: Upload via SFTP
+      - name: Upload to FTP
         env:
-          SFTP_HOST: ${{ secrets.SFTP_HOST }}
-          SFTP_USER: ${{ secrets.SFTP_USER }}
-          SFTP_PASSWORD: ${{ secrets.SFTP_PASSWORD }}
-        run: |
-          pip install paramiko
-          python scripts/sftp_upload.py
+          FTP_HOST: ${{ secrets.FTP_HOST }}
+          FTP_USER: ${{ secrets.FTP_USER }}
+          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+        run: python scripts/ftp_upload.py
 
