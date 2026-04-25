@@ -1,0 +1,62 @@
+name: Python Crawler Automation
+
+on:
+  schedule:
+      - cron: '*/30 * * * *'
+        workflow_dispatch:
+
+        jobs:
+          crawl:
+              runs-on: ubuntu-latest
+                  steps:
+                        - uses: actions/checkout@v3
+
+                              - name: Set up Python
+                                      uses: actions/setup-python@v4
+                                              with:
+                                                        python-version: '3.11'
+
+                                                              - name: Install dependencies
+                                                                      run: |
+                                                                                python -m pip install --upgrade pip
+                                                                                          pip install requests
+
+                                                                                                - name: Run crawler
+                                                                                                        run: |
+                                                                                                                  python crawler.py
+                                                                                                                            echo "Crawler test completed successfully!"
+                                                                                                                            
+                                                                                                                                  - name: Upload to FTP
+                                                                                                                                          env:
+                                                                                                                                                    FTP_HOST: ${{ secrets.FTP_HOST }}
+                                                                                                                                                              FTP_USER: ${{ secrets.FTP_USER }}
+                                                                                                                                                                        FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+                                                                                                                                                                                run: |
+                                                                                                                                                                                          pip install pysftp paramiko
+                                                                                                                                                                                                    python << 'EOF'
+                                                                                                                                                                                                    import os
+                                                                                                                                                                                                    import ftplib
+                                                                                                                                                                                                    from datetime import datetime
+                                                                                                                                                                                                    
+                                                                                                                                                                                                    ftp_host = os.getenv('FTP_HOST')
+                                                                                                                                                                                                    ftp_user = os.getenv('FTP_USER')
+                                                                                                                                                                                                    ftp_password = os.getenv('FTP_PASSWORD')
+                                                                                                                                                                                                    
+                                                                                                                                                                                                    try:
+                                                                                                                                                                                                        ftp = ftplib.FTP(ftp_host)
+                                                                                                                                                                                                            ftp.login(ftp_user, ftp_password)
+                                                                                                                                                                                                                ftp.cwd('/')
+                                                                                                                                                                                                                    print(f'[FTP] Connected to: {ftp_host}')
+                                                                                                                                                                                                                        print(f'[FTP] Current directory: {ftp.pwd()}')
+                                                                                                                                                                                                                            
+                                                                                                                                                                                                                                # Upload crawler output
+                                                                                                                                                                                                                                    filename = f'crawler_output_{datetime.now().strftime("%Y%m%d_%H%M%S")}.txt'
+                                                                                                                                                                                                                                        with open('crawler_output.txt', 'rb') as f:
+                                                                                                                                                                                                                                                ftp.storbinary(f'STOR {filename}', f)
+                                                                                                                                                                                                                                                    print(f'[FTP] File uploaded successfully: {filename}')
+                                                                                                                                                                                                                                                        
+                                                                                                                                                                                                                                                        except Exception as e:
+                                                                                                                                                                                                                                                            print(f'[FTP] Error: {e}')
+                                                                                                                                                                                                                                                            finally:
+                                                                                                                                                                                                                                                                ftp.quit()
+                                                                                                                                                                                                                                                                EOF
