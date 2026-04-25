@@ -47,15 +47,19 @@ try:
     ftp = ftplib.FTP(ftp_host)
     ftp.login(ftp_user, ftp_password)
     ftp.cwd('/')
-    print(f'[FTP] Connected: {ftp_host}')
+    print('[FTP] Connected to: ' + ftp_host)
 
-    filename = f'crawler_output_{datetime.now().strftime("%Y%m%d_%H%M%S")}.txt'
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    filename = 'crawler_output_' + timestamp + '.txt'
     with open('crawler_output.txt', 'rb') as f:
-        ftp.storbinary(f'STOR {filename}', f)
-    print(f'[FTP] Upload Success: {filename}')
+        ftp.storbinary('STOR ' + filename, f)
+    print('[FTP] Upload Success: ' + filename)
 
 except Exception as e:
-    print(f'[FTP] Error: {e}')
+    print('[FTP] Error: ' + str(e))
 finally:
-    ftp.quit()
+    try:
+        ftp.quit()
+    except:
+        pass
 EOF
