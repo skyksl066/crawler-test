@@ -27,40 +27,39 @@ jobs:
           echo "Crawler executed successfully"
           cat crawler_output.txt
 
-      - name: Upload to FTP
+      - name: Upload via SFTP
         env:
-          FTP_HOST: ${{ secrets.FTP_HOST }}
-          FTP_USER: ${{ secrets.FTP_USER }}
-          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+          SFTP_HOST: ${{ secrets.SFTP_HOST }}
+          SFTP_USER: ${{ secrets.SFTP_USER }}
+          SFTP_PASSWORD: ${{ secrets.SFTP_PASSWORD }}
         run: |
           pip install paramiko
           python << 'EOF'
 import os
-import ftplib
+import paramiko
 from datetime import datetime
 
-ftp_host = os.getenv('FTP_HOST')
-ftp_user = os.getenv('FTP_USER')
-ftp_password = os.getenv('FTP_PASSWORD')
+sftp_host = os.getenv('SFTP_HOST')
+sftp_user = os.getenv('SFTP_USER')
+sftp_password = os.getenv('SFTP_PASSWORD')
+sftp_path = '/home/juicyhot/domains/juicyhothello.com/public_ftp'
 
 try:
-    ftp = ftplib.FTP(ftp_host)
-    ftp.login(ftp_user, ftp_password)
-    ftp.cwd('/')
-    print('[FTP] Connected to: ' + ftp_host)
+    transport = paramiko.Transport((sftp_host, 22))
+    transport.connect(username=sftp_user, password=sftp_password)
+    sftp = paramiko.SFTPClient.from_transport(transport)
 
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-    filename = 'crawler_output_' + timestamp + '.txt'
-    with open('crawler_output.txt', 'rb') as f:
-        ftp.storbinary('STOR ' + filename, f)
-    print('[FTP] Upload Success: ' + filename)
+    remote_filename = f'crawler_output_{timestamp}.txt'
+    remote_path = f'{sftp_path}/{remote_filename}'
+
+    sftp.put('crawler_output.txt', remote_path)
+    print(f'[SFTP] Upload Success: {remote_filename}')
+
+    sftp.close()
+    transport.close()
 
 except Exception as e:
-    print('[FTP] Error: ' + str(e))
-finally:
-    try:
-        ftp.quit()
-    except:
-        pass
+    print(f'[SFTP] Error: {str(e)}')
 EOF
 
