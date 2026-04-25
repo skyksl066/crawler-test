@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Simple Web Crawler for Testing
-GitHub Actions Automation with FTP Upload
+GitHub Actions Automation with SFTP Upload
 """
 
 import requests
