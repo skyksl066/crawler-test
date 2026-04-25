@@ -4,98 +4,78 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 專案概述
 
-Python Web 爬蟲 + GitHub Actions 自動化執行系統。爬蟲定期抓取網頁資料、進行測試驗證，並將結果上傳至 FTP 服務器。
+Python Web 爬蟲 + GitHub Actions 自動部署系統。Push 到 main 分支後，GitHub Actions 自動將原始碼部署至 FTP 服務器；服務器端使用 `run_crawler.sh` 執行爬蟲。
 
 ### 核心架構
 
 **crawler.py**
-- 主要爬蟲程式，單一入口點
-- 功能：HTTP 請求測試、資料處理、結果輸出到本地檔案
-- 運行方式：直接執行 `python crawler.py` 或由 GitHub Actions 排程觸發
+- 主爬蟲程式，執行 HTTP 測試並將結果寫入 `crawler_output.txt`（JSON 格式）
+- 測試邏輯新增在 `main()` 中
 
-**GitHub Actions Workflow** (.github/workflows/crawler.yml)
-- 排程執行：每 30 分鐘自動運行
-- 環境：Ubuntu 最新版 + Python 3.11
-- 流程：
-  1. 安裝依賴 (requests, paramiko)
-  2. 執行 crawler.py
-  3. 將結果上傳到 FTP 服務器
+**scripts/ftp_upload.py**
+- 讀取環境變數 `FTP_HOST / FTP_USER / FTP_PASSWORD`，使用標準庫 `ftplib` 上傳原始碼
+- 上傳清單：`crawler.py`、`requirements.txt`、`run_crawler.sh`
+- 任一環境變數缺失則立即 `sys.exit(1)`
+
+**run_crawler.sh**
+- 服務器端執行腳本：`pip3 install -r requirements.txt --quiet` → `python3 crawler.py`
+- 執行前自動 `cd` 至腳本所在目錄，日誌含時間戳標頭
+
+**GitHub Actions Workflow** (`.github/workflows/crawler.yml`)
+- 觸發條件：push 到 main 分支
+- 職責：執行 `scripts/ftp_upload.py`，將原始碼部署到 FTP 服務器
+- **不在 CI 中執行爬蟲**，爬蟲由服務器端自行排程呼叫 `run_crawler.sh`
 
 ### 依賴
 
-核心依賴在 GitHub Actions 中安裝：
-- **requests**：HTTP 請求庫
-- **paramiko**（FTP 上傳用）
-
-開發時需提前安裝：
-```bash
-pip install requests paramiko
 ```
+requests==2.32.3
+```
+
+FTP 上傳使用 Python 標準庫 `ftplib`，無需額外安裝。
 
 ## 常用命令
 
-### 本地開發
-
-**運行爬蟲**
+**本地執行爬蟲**
 ```bash
 python crawler.py
 ```
 
-輸出結果到 `crawler_output.txt`。
-
-**檢查語法**
+**語法檢查**
 ```bash
-python -m py_compile crawler.py
+python -m py_compile crawler.py && python -m py_compile scripts/ftp_upload.py
 ```
 
-### GitHub Actions
+**手動觸發部署（需設定 FTP 環境變數）**
+```bash
+FTP_HOST=... FTP_USER=... FTP_PASSWORD=... python scripts/ftp_upload.py
+```
 
-**手動觸發工作流程**
-在 GitHub Actions 頁面點選「Run workflow」按鈕，或使用 gh CLI：
+**手動觸發 GitHub Actions**
 ```bash
 gh workflow run crawler.yml
 ```
 
+**查看最近執行記錄**
+```bash
+gh run view --log
+```
+
 ## 環境配置
 
-### FTP 上傳設定
+GitHub Secrets 需設定：
 
-爬蟲執行結果會自動上傳至 FTP 服務器。需在 GitHub Secrets 設定以下變數：
-
-| 變數名稱 | 說明 |
-|---------|------|
+| 變數 | 說明 |
+|------|------|
 | `FTP_HOST` | FTP 服務器位址 |
 | `FTP_USER` | FTP 帳號 |
 | `FTP_PASSWORD` | FTP 密碼 |
 
-**設定方式**：
-1. GitHub 專案設定 → Secrets and variables → Actions
-2. 新增 Repository secrets
-
-### 本地測試 FTP 功能
-
-若需在本地測試 FTP 上傳，建立 `.env` 檔案（不要提交）：
-```
-FTP_HOST=your_ftp_host
-FTP_USER=your_user
-FTP_PASSWORD=your_password
-```
+本地測試可建立 `.env`（不要提交），搭配 `export` 或 `python-dotenv` 載入。
 
 ## 程式碼修改指南
 
-- 新增爬蟲邏輯時，在 `main()` 函式中的相應測試段添加
-- 結果輸出格式維持 JSON，便於解析和存檔
-- HTTP 請求需設置 timeout（預設 10 秒），防止長時間掛起
-- 例外處理：捕捉可預期的錯誤（網路、檔案 I/O），將詳細訊息記錄至輸出結果
-
-## 調試
-
-執行爬蟲並查看詳細輸出：
-```bash
-python crawler.py 2>&1 | tee debug_output.txt
-```
-
-觀察 GitHub Actions 工作流程日誌：
-```bash
-gh run view --log
-```
+- 新增爬蟲邏輯：在 `crawler.py` 的 `main()` 中新增測試段，並將結果 append 至 `test_results["data"]`
+- 輸出格式維持 JSON，欄位包含 `test`（測試名稱）、`result`（PASS/FAIL）、`error`（可選）
+- HTTP 請求一律設定 `timeout=10`
+- 若需在服務器部署新檔案，更新 `scripts/ftp_upload.py` 的 `files_to_upload` 清單
