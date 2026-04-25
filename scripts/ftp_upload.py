@@ -9,9 +9,9 @@ ftp_password = os.getenv('FTP_PASSWORD')
 remote_path = '/home/juicyhot/scripts'
 
 files_to_upload = [
-    ('crawler.py', f'{remote_path}/crawler.py'),
-    ('requirements.txt', f'{remote_path}/requirements.txt'),
-    ('scripts/run_crawler.sh', f'{remote_path}/run_crawler.sh'),
+    ('crawler.py', 'crawler.py'),
+    ('requirements.txt', 'requirements.txt'),
+    ('run_crawler.sh', 'run_crawler.sh'),
 ]
 
 try:
