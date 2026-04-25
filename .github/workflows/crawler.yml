@@ -36,6 +36,7 @@ jobs:
           pip install paramiko
           python << 'EOF'
 import os
+import sys
 import paramiko
 from datetime import datetime
 
@@ -44,22 +45,20 @@ sftp_user = os.getenv('SFTP_USER')
 sftp_password = os.getenv('SFTP_PASSWORD')
 sftp_path = '/home/juicyhot/domains/juicyhothello.com/public_ftp'
 
+timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+remote_filename = f'crawler_output_{timestamp}.txt'
+remote_path = f'{sftp_path}/{remote_filename}'
+
+transport = paramiko.Transport((sftp_host, 22))
 try:
-    transport = paramiko.Transport((sftp_host, 22))
     transport.connect(username=sftp_user, password=sftp_password)
-    sftp = paramiko.SFTPClient.from_transport(transport)
-
-    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-    remote_filename = f'crawler_output_{timestamp}.txt'
-    remote_path = f'{sftp_path}/{remote_filename}'
-
-    sftp.put('crawler_output.txt', remote_path)
-    print(f'[SFTP] Upload Success: {remote_filename}')
-
-    sftp.close()
-    transport.close()
-
+    with paramiko.SFTPClient.from_transport(transport) as sftp:
+        sftp.put('crawler_output.txt', remote_path)
+        print(f'[SFTP] Upload Success: {remote_filename}')
 except Exception as e:
-    print(f'[SFTP] Error: {str(e)}')
+    print(f'[SFTP] Error: {type(e).__name__}: {str(e)}')
+    sys.exit(1)
+finally:
+    transport.close()
 EOF
 
