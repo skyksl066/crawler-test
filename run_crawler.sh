@@ -6,9 +6,10 @@ echo "===== $(date '+%Y-%m-%d %H:%M:%S') ====="
 
 mkdir -p output
 
-if [ ! -f "venv/bin/python3" ]; then
+if [ ! -f "venv/bin/activate" ]; then
     rm -rf venv
-    python3 -m venv venv
+    python3 -m venv --without-pip venv
+    curl -sS https://bootstrap.pypa.io/get-pip.py | venv/bin/python3
 fi
 
 source venv/bin/activate
