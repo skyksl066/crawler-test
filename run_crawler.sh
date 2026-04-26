@@ -1,11 +1,13 @@
 #!/bin/bash
+set -e
 cd "$(dirname "$0")"
 
 echo "===== $(date '+%Y-%m-%d %H:%M:%S') ====="
 
 mkdir -p output
 
-if [ ! -d "venv" ]; then
+if [ ! -f "venv/bin/python3" ]; then
+    rm -rf venv
     python3 -m venv venv
 fi
 
