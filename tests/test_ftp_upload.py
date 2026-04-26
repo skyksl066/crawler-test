@@ -18,7 +18,8 @@ class TestEnsureDir(unittest.TestCase):
     def test_ignores_error_perm_when_directory_exists(self):
         ftp = MagicMock()
         ftp.mkd.side_effect = ftplib.error_perm('550 Directory already exists')
-        ensure_dir(ftp, 'crawler-test')  # 不應拋出例外
+        ensure_dir(ftp, 'crawler-test')
+        ftp.mkd.assert_called_once_with('crawler-test')
 
 
 if __name__ == '__main__':

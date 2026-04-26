@@ -13,8 +13,9 @@ files_to_upload = [
 def ensure_dir(ftp, dirname):
     try:
         ftp.mkd(dirname)
-    except ftplib.error_perm:
-        pass
+    except ftplib.error_perm as e:
+        if not str(e).startswith('550'):
+            raise
 
 
 def main():
