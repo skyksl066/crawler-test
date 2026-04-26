@@ -18,9 +18,19 @@ files_to_upload = [
     ('run_crawler.sh', 'run_crawler.sh'),
 ]
 
+
+def ensure_dir(ftp, dirname):
+    try:
+        ftp.mkd(dirname)
+    except ftplib.error_perm:
+        pass
+
+
 try:
     with ftplib.FTP(ftp_host) as ftp:
         ftp.login(ftp_user, ftp_password)
+        ensure_dir(ftp, 'crawler-test')
+        ftp.cwd('crawler-test')
         for local_file, remote_file in files_to_upload:
             with open(local_file, 'rb') as f:
                 ftp.storbinary(f'STOR {remote_file}', f)
