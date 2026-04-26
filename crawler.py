@@ -48,7 +48,7 @@ def main():
     print(f"Timestamp: {run_timestamp}")
     print(f"Total tests: {len(test_results['data'])}")
 
-    output_file = "crawler_output.txt"
+    output_file = "output/crawler_output.txt"
     try:
         with open(output_file, "w") as f:
             f.write("Crawler Execution Report\n")
