@@ -15,8 +15,6 @@ class TestCrawlerOutputPath(unittest.TestCase):
             os.makedirs('output', exist_ok=True)
             try:
                 import crawler
-                import importlib
-                importlib.reload(crawler)
                 with patch('requests.get') as mock_get:
                     mock_get.return_value.status_code = 200
                     crawler.main()
@@ -27,6 +25,10 @@ class TestCrawlerOutputPath(unittest.TestCase):
                 self.assertFalse(
                     os.path.exists('crawler_output.txt'),
                     "crawler_output.txt should NOT exist in root"
+                )
+                self.assertGreater(
+                    os.path.getsize('output/crawler_output.txt'), 0,
+                    "output file should not be empty"
                 )
             finally:
                 os.chdir(original_dir)
