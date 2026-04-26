@@ -14,10 +14,10 @@ class TestCrawlerOutputPath(unittest.TestCase):
             os.chdir(tmpdir)
             os.makedirs('output', exist_ok=True)
             try:
-                import crawler
+                import app
                 with patch('requests.get') as mock_get:
                     mock_get.return_value.status_code = 200
-                    crawler.main()
+                    app.main()
                 self.assertTrue(
                     os.path.exists('output/crawler_output.txt'),
                     "output/crawler_output.txt should exist"
