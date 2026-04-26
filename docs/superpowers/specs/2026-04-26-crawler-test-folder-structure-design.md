@@ -16,6 +16,7 @@
     ├── crawler.py
     ├── requirements.txt
     ├── run_crawler.sh
+    ├── venv/               ← 伺服器本地，不上傳
     └── output/
         └── crawler_output.txt
 ```
@@ -31,7 +32,10 @@
 
 ### 2. `run_crawler.sh`
 
-- 在 `pip3 install` 之前加入 `mkdir -p output`，確保 `output/` 存在
+- 加入 `mkdir -p output` 確保輸出目錄存在
+- 加入 venv 初始化邏輯：若 `venv/` 不存在則執行 `python3 -m venv venv`
+- 透過 `source venv/bin/activate` 啟用虛擬環境後再執行 `pip install` 與 `python3 crawler.py`
+- 每個專案各自維護自己的 `venv/`，套件完全隔離
 
 ### 3. `crawler.py`
 
